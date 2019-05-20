@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/textproto"
 	"strings"
 	"time"
 )
@@ -66,7 +67,7 @@ func (rer *Receiver) Start() {
 			log.Printf("Unresolved command: %s, data: %s", com.Cmd, com.String())
 		}
 	}
-	log.Println("mail is: ", mail)
+	log.Printf("mail is:\n%s\n------------", mail)
 	log.Println("session is over!")
 }
 
@@ -101,20 +102,23 @@ func (rer *Receiver) ReadCommand() *Command {
 }
 
 func (rer *Receiver) ReadData(mail *Mail) bool {
-	for {
-		line, err := rer.bfr.ReadString('\n')
-		if err != nil {
-			log.Println("err when read data: ", err)
-			continue
-		}
-		if line == ".\r\n" {
-			log.Println("read data accepted!")
-			return true
-		}
-
-		mail.Content += line
-		// todo: 安全控制
+	tr := textproto.NewReader(rer.bfr)
+	mime, err := tr.ReadMIMEHeader()
+	if err != nil {
+		log.Println("read header err: ", err)
+		return false
 	}
+	mail.mime = mime
+
+	data, err := tr.ReadDotLines()
+	if err == io.EOF {
+		log.Println("read data accepted!")
+	} else if err != nil {
+		log.Println("read header err: ", err)
+		return false
+	}
+	mail.data = data
+	return true
 }
 
 func (rer *Receiver) WriteReply(rep *Reply) {

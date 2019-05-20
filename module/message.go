@@ -1,6 +1,9 @@
 package module
 
-import "fmt"
+import (
+	"fmt"
+	"net/textproto"
+)
 
 // Command 用于描述 SMTP 中的命令.
 type Command struct {
@@ -25,7 +28,20 @@ func (rep *Reply) String() string {
 }
 
 type Mail struct {
-	OriAddr string
-	RecAddr []string
-	Content string
+	mime textproto.MIMEHeader
+	data []string
+}
+
+func (m *Mail) String() string {
+	str := ""
+	for k, v := range m.mime {
+		str += fmt.Sprintf("%s: %s\n", k, v)
+	}
+	for i, v := range m.data {
+		str += fmt.Sprintf("%s", v)
+		if i != len(m.data)-1 {
+			str += "\n"
+		}
+	}
+	return str
 }
