@@ -4,22 +4,28 @@ import "fmt"
 
 // Command 用于描述 SMTP 中的命令.
 type Command struct {
-	Cmd string
+	Cmd    string
 	Params map[string][]string
 }
 
 // todo: 实现
 func (com *Command) String() string {
-	return ""
+	return fmt.Sprintln(com)
 }
 
 // Reply 用于描述 SMTP 中的回复.
 type Reply struct {
 	StateCode int
-	Text string
+	Text      string
 }
 
 // String 将 Reply 变成 line.
 func (rep *Reply) String() string {
-	return fmt.Sprintf("%d %s\r\n", rep.StateCode, rep.text)
+	return fmt.Sprintf("%d %s\r\n", rep.StateCode, rep.Text)
+}
+
+type Mail struct {
+	OriAddr string
+	RecAddr []string
+	Content string
 }

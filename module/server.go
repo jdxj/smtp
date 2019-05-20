@@ -7,7 +7,7 @@ import (
 
 func init() {
 	log.SetPrefix("[SMTPServer]")
-	log.SetFlags(log.Ldate|log.Ltime|log.Lshortfile)
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }
 
 type SMTPServer struct {
@@ -31,9 +31,8 @@ func (ss *SMTPServer) ListenAndAccept() {
 
 		go func() {
 			log.Println("接受新连接!")
-			mFsm := NewMailFSM(Connected, conn)
-			mFsm.ReplyConnected()
-			mFsm.LoopRead()
+			rer := NewReceiver(conn)
+			rer.Start()
 		}()
 	}
 }
