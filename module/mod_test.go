@@ -2,14 +2,18 @@ package module
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/base64"
 	"fmt"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
+	"io/ioutil"
 	"net/textproto"
 	"strings"
 	"testing"
 )
 
-func TestReceiver_ReadData(t *testing.T) {
-	data := `DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
+var data = `DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
 	t=1558324854; bh=0V8UZaxOGRf8p8BdTAENiHY3Gk9n78qA7jAwMIvjQIQ=;
 	h=From:To:Subject:Mime-Version:Date:Message-ID;
 	b=Zg6T7oJqFUFyJDmtOG1cQ8WXHBSs95auDd65nC+AjWbSL0lmslBigfGLm0Ra0KeN1
@@ -72,6 +76,8 @@ dj4=
 .
 
 `
+
+func TestReceiver_ReadData(t *testing.T) {
 	tr := textproto.NewReader(bufio.NewReader(strings.NewReader(data)))
 	mime, err := tr.ReadMIMEHeader()
 	if err != nil {
@@ -97,4 +103,79 @@ dj4=
 	for _, v := range lines {
 		fmt.Println(v)
 	}
+}
+
+func TestNewReceiver_Mail(t *testing.T) {
+	r := bufio.NewReader(strings.NewReader(data))
+	tr := textproto.NewReader(r)
+	mime, err := tr.ReadMIMEHeader()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	v, ok := mime["Content-Type"]
+	if !ok {
+		fmt.Println("have no Content-Tye")
+		return
+	}
+
+	n := strings.Index(v[0], "boundary=")
+	if n < 0 {
+		fmt.Println("have no boundary=")
+		return
+	}
+
+	nextPart := v[0][n+9:]
+	nextPart = strings.ReplaceAll(nextPart, "\"", "")
+	nextParts := strings.Split(nextPart, "=")
+	if len(nextParts) < 2 {
+		fmt.Println("have no enough len!")
+		return
+	}
+	nextPart = nextParts[1]
+
+	lines, err := tr.ReadDotLines()
+	if err != nil {
+		fmt.Println("err: ", err)
+		return
+	}
+
+	var parts []string
+	part := ""
+	for _, v := range lines {
+		if strings.Index(v, nextPart) >= 0 {
+			parts = append(parts, part)
+			part = ""
+			continue
+		}
+
+		part += v
+	}
+
+	var realPats []string
+	for _, v := range parts {
+		i := strings.Index(v, "base64")
+		if i < 0 {
+			continue
+		}
+		data, err := base64.StdEncoding.DecodeString(string(v[i+6:]))
+		if err != nil {
+			fmt.Println("decode err: ", err)
+			return
+		}
+		sRd := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder())
+		data, err = ioutil.ReadAll(sRd)
+		if err != nil {
+			fmt.Println("err: ", err)
+			return
+		}
+
+		realPats = append(realPats, string(data))
+	}
+
+	for _, v := range realPats {
+		fmt.Println(v)
+	}
+
 }

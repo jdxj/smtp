@@ -2,6 +2,7 @@ package module
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -67,7 +68,7 @@ func (rer *Receiver) Start() {
 			log.Printf("Unresolved command: %s, data: %s", com.Cmd, com.String())
 		}
 	}
-	log.Printf("mail is:\n%s\n------------", mail)
+	fmt.Println(mail.ParseMail())
 	log.Println("session is over!")
 }
 
