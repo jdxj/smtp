@@ -8,6 +8,7 @@ import (
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 	"io/ioutil"
+	"net/mail"
 	"net/textproto"
 	"strings"
 	"testing"
@@ -178,4 +179,18 @@ func TestNewReceiver_Mail(t *testing.T) {
 		fmt.Println(v)
 	}
 
+}
+
+func TestGoMail(t *testing.T) {
+	fmt.Println("Test Go Mail ...")
+	r := strings.NewReader(data)
+	mailMsg, err := mail.ReadMessage(r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for k, v := range mailMsg.Header {
+		fmt.Printf("%s: %s\n", k, v)
+	}
 }

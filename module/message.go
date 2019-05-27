@@ -1,12 +1,15 @@
 package module
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/base64"
 	"fmt"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 	"io/ioutil"
+	"log"
+	"net/mail"
 	"net/textproto"
 	"strings"
 )
@@ -33,28 +36,22 @@ func (rep *Reply) String() string {
 	return fmt.Sprintf("%d %s\r\n", rep.StateCode, rep.Text)
 }
 
-type Mail struct {
-	mime textproto.MIMEHeader
-	data []string
+type MailMsg struct {
+	msg *mail.Message
 }
 
-func (m *Mail) String() string {
+func (m *MailMsg) String() string {
 	str := ""
-	for k, v := range m.mime {
+	for k, v := range m.msg.Header {
 		str += fmt.Sprintf("%s: %s\n", k, v)
 	}
-	for i, v := range m.data {
-		str += fmt.Sprintf("%s", v)
-		if i != len(m.data)-1 {
-			str += "\n"
-		}
-	}
-	return str
+	body, _ := ioutil.ReadAll(m.msg.Body)
+	return str + string(body)
 }
 
 // ParseMail 用于解析 multipart/alternative 邮件部分
-func (m *Mail) ParseMail() string {
-	v, ok := m.mime["Content-Type"]
+func (m *MailMsg) ParseMail() string {
+	v, ok := m.msg.Header["Content-Type"]
 	if !ok {
 		return ""
 	}
@@ -74,7 +71,11 @@ func (m *Mail) ParseMail() string {
 	}
 	nextPart = nextParts[1]
 
-	lines := m.data
+	lines, err := textproto.NewReader(bufio.NewReader(m.msg.Body)).ReadDotLines()
+	if err != nil {
+		log.Println("err: ", err)
+		return ""
+	}
 
 	var parts []string
 	part := ""

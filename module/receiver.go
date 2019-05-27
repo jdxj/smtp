@@ -2,11 +2,10 @@ package module
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"log"
 	"net"
-	"net/textproto"
+	"net/mail"
 	"strings"
 	"time"
 )
@@ -29,8 +28,6 @@ type Receiver struct {
 
 func (rer *Receiver) Start() {
 	defer rer.conn.Close()
-	mail := &Mail{}
-
 	// 问候
 	rer.WriteReply(rer.ReplyGreetings())
 
@@ -55,9 +52,12 @@ func (rer *Receiver) Start() {
 			rer.WriteReply(rer.ReplyRCPT())
 		case "data":
 			rer.WriteReply(rer.ReplyDATA())
-			ok := rer.ReadData(mail)
-			if ok {
+			mailMsg, err := rer.ReadMail()
+			if err == nil {
 				rer.WriteReply(rer.ReplyDataEnd())
+
+				content := mailMsg.ParseMail()
+				log.Println("content: ", content)
 			} else {
 				rer.WriteReply(rer.ReplyDataFailure())
 			}
@@ -68,7 +68,6 @@ func (rer *Receiver) Start() {
 			log.Printf("Unresolved command: %s, data: %s", com.Cmd, com.String())
 		}
 	}
-	fmt.Println(mail.ParseMail())
 	log.Println("session is over!")
 }
 
@@ -102,24 +101,15 @@ func (rer *Receiver) ReadCommand() *Command {
 	}
 }
 
-func (rer *Receiver) ReadData(mail *Mail) bool {
-	tr := textproto.NewReader(rer.bfr)
-	mime, err := tr.ReadMIMEHeader()
+func (rer *Receiver) ReadMail() (*MailMsg, error) {
+	mailMsg := &MailMsg{}
+	msg, err := mail.ReadMessage(rer.bfr)
 	if err != nil {
-		log.Println("read header err: ", err)
-		return false
+		return nil, err
 	}
-	mail.mime = mime
 
-	data, err := tr.ReadDotLines()
-	if err == io.EOF {
-		log.Println("read data accepted!")
-	} else if err != nil {
-		log.Println("read header err: ", err)
-		return false
-	}
-	mail.data = data
-	return true
+	mailMsg.msg = msg
+	return mailMsg, nil
 }
 
 func (rer *Receiver) WriteReply(rep *Reply) {
