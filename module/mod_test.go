@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/mail"
 	"net/textproto"
 	"strings"
@@ -92,7 +94,7 @@ func TestReceiver_ReadData(t *testing.T) {
 		fmt.Printf("v: %s\n", v)
 	}
 
-	fmt.Println("----------------------------------------------")
+	fmt.Println("---------------abc-------------------------------")
 
 	lines, err := tr.ReadDotLines()
 	if err != nil {
@@ -192,5 +194,85 @@ func TestGoMail(t *testing.T) {
 
 	for k, v := range mailMsg.Header {
 		fmt.Printf("%s: %s\n", k, v)
+	}
+
+	for k, v := range mailMsg.Header {
+		fmt.Println("k: ", k)
+		for i, v2 := range v {
+			fmt.Printf("%d, %s\n", i, v2)
+		}
+		fmt.Println("-----------------")
+	}
+}
+
+func TestSplitLine(t *testing.T) {
+	r := strings.NewReader(data)
+	msg, err := mail.ReadMessage(r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	res := make(map[string]string)
+	// v 的长度可能大于1, 大部分为1.
+	for _, v1 := range msg.Header["Content-Type"] {
+		parts := strings.Split(v1, ";")
+		for _, part := range parts {
+			part = strings.TrimSpace(part)
+
+			if idx := strings.Index(part, "="); idx < 0 {
+				res[part] = ""
+			} else {
+				res[part[:idx]] = part[idx+1:]
+			}
+		}
+	}
+
+	for k, v := range res {
+		fmt.Printf("%s: %s\n", k, v)
+	}
+}
+
+func TestMultipart(t *testing.T) {
+	r := strings.NewReader(data)
+	msg, err := mail.ReadMessage(r)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	body := msg.Body
+	partReader := multipart.NewReader(body, "----=_NextPart_5CE22675_0B105A80_6C22D71A")
+	part, err := partReader.NextPart()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(part.Header)
+	fmt.Println(part.FileName())
+	fmt.Println(part.FormName())
+}
+
+func TestNewReceiver_Mail2(t *testing.T) {
+	msg, err := mail.ReadMessage(strings.NewReader(data))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	boundary := "----=_NextPart_5CE22675_0B105A80_6C22D71A"
+	pReader := multipart.NewReader(msg.Body, boundary)
+
+	i := 0
+	for part, err := pReader.NextPart(); err == nil; part, err = pReader.NextPart() {
+		fmt.Printf("%d: %v\n", i, part.Header)
+		buf := make([]byte, 4096)
+		n, err := part.Read(buf)
+		if err != nil && err != io.EOF {
+			fmt.Println("err 1: ", err)
+			return
+		}
+		fmt.Printf("\tlen: %d, content: %s", n, buf[:n])
+		i++
 	}
 }

@@ -54,13 +54,13 @@ func (rer *Receiver) Start() {
 			rer.WriteReply(rer.ReplyDATA())
 			mailMsg, err := rer.ReadMail()
 			if err == nil {
-				rer.WriteReply(rer.ReplyDataEnd())
-
-				content := mailMsg.ParseMail()
-				log.Println("content: ", content)
+				mailMsg.ParseMail()
+				log.Printf("mail is: %s", mailMsg)
 			} else {
 				rer.WriteReply(rer.ReplyDataFailure())
 			}
+		case ".":
+			rer.WriteReply(rer.ReplyDataEnd())
 		case "quit":
 			rer.WriteReply(rer.ReplyQUIT())
 			break
@@ -82,6 +82,7 @@ func (rer *Receiver) ReadCommand() *Command {
 			time.Sleep(time.Second)
 			continue
 		}
+		line = strings.TrimSuffix(line, "\r\n")
 		// todo: 对命令以及其参数的更详细的解析
 		params := strings.Split(line, " ")
 		count := len(params)

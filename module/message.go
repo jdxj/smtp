@@ -1,7 +1,6 @@
 package module
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/base64"
 	"fmt"
@@ -9,8 +8,8 @@ import (
 	"golang.org/x/text/transform"
 	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/mail"
-	"net/textproto"
 	"strings"
 )
 
@@ -22,7 +21,7 @@ type Command struct {
 
 // todo: 实现
 func (com *Command) String() string {
-	return fmt.Sprintln(com)
+	return fmt.Sprintln("test string")
 }
 
 // Reply 用于描述 SMTP 中的回复.
@@ -37,7 +36,10 @@ func (rep *Reply) String() string {
 }
 
 type MailMsg struct {
-	msg *mail.Message
+	msg   *mail.Message
+	parts []*multipart.Part
+	// contents 是与 parts 对应的数据内容.
+	contents []string
 }
 
 func (m *MailMsg) String() string {
@@ -45,76 +47,87 @@ func (m *MailMsg) String() string {
 	for k, v := range m.msg.Header {
 		str += fmt.Sprintf("%s: %s\n", k, v)
 	}
-	body, _ := ioutil.ReadAll(m.msg.Body)
-	return str + string(body)
+
+	for i, p := range m.parts {
+		str += fmt.Sprintf("Part %d:\n", i)
+		str += fmt.Sprintf("\tHeader: %s\n", p.Header)
+		str += fmt.Sprintf("\tContent: %s\n", m.contents[i])
+	}
+	return str
 }
 
 // ParseMail 用于解析 multipart/alternative 邮件部分
-func (m *MailMsg) ParseMail() string {
-	v, ok := m.msg.Header["Content-Type"]
+func (m *MailMsg) ParseMail() {
+	ct := m.ParseHeaderContentType()
+	if ct == nil {
+		return
+	}
+	nextPart, ok := ct["boundary"]
 	if !ok {
+		return
+	}
+	nextPart = strings.Trim(nextPart, "\"")
+
+	pReader := multipart.NewReader(m.msg.Body, nextPart)
+	var res []*multipart.Part
+	var contents []string
+	for part, err := pReader.NextPart(); err == nil; part, err = pReader.NextPart() {
+		str := Decode(part)
+		contents = append(contents, str)
+		res = append(res, part)
+	}
+
+	m.parts = res
+	m.contents = contents
+}
+
+func (m *MailMsg) ParseHeaderContentType() map[string]string {
+	v, ok := m.msg.Header["Content-Type"]
+	if !ok || len(v) < 1 {
+		log.Println("没有找到 Content-Type 或其值!")
+		return nil
+	}
+
+	res := make(map[string]string)
+	// v 的长度可能大于1, 大部分为1.
+	for _, v1 := range v {
+		parts := strings.Split(v1, ";")
+		for _, part := range parts {
+			part = strings.TrimSpace(part)
+
+			if idx := strings.Index(part, "="); idx < 0 {
+				res[part] = ""
+			} else {
+				res[part[:idx]] = part[idx+1:]
+			}
+		}
+	}
+	return res
+}
+
+// todo: 使用 part.Header 指定编码解码.
+func Decode(part *multipart.Part) string {
+	if part == nil {
 		return ""
 	}
 
-	n := strings.Index(v[0], "boundary=")
-	if n < 0 {
-		fmt.Println("have no boundary=")
+	data, err := ioutil.ReadAll(part)
+	if err != nil {
+		log.Println(err)
 		return ""
 	}
 
-	nextPart := v[0][n+9:]
-	nextPart = strings.ReplaceAll(nextPart, "\"", "")
-	nextParts := strings.Split(nextPart, "=")
-	if len(nextParts) < 2 {
-		fmt.Println("have no enough len!")
+	data, err = base64.StdEncoding.DecodeString(string(data))
+	if err != nil {
+		log.Println("decode err: ", err)
 		return ""
 	}
-	nextPart = nextParts[1]
 
-	lines, err := textproto.NewReader(bufio.NewReader(m.msg.Body)).ReadDotLines()
+	sRd := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder())
+	data, err = ioutil.ReadAll(sRd)
 	if err != nil {
 		log.Println("err: ", err)
 		return ""
 	}
-
-	var parts []string
-	part := ""
-	for _, v := range lines {
-		if strings.Index(v, nextPart) >= 0 {
-			parts = append(parts, part)
-			part = ""
-			continue
-		}
-
-		part += v
-	}
-
-	var realPats []string
-	for _, v := range parts {
-		i := strings.Index(v, "base64")
-		if i < 0 {
-			continue
-		}
-		data, err := base64.StdEncoding.DecodeString(string(v[i+6:]))
-		if err != nil {
-			fmt.Println("decode err: ", err)
-			return ""
-		}
-		sRd := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder())
-		data, err = ioutil.ReadAll(sRd)
-		if err != nil {
-			fmt.Println("err: ", err)
-			return ""
-		}
-
-		realPats = append(realPats, string(data))
-	}
-
-	res := ""
-	for i, v := range realPats {
-		res += fmt.Sprintf("第 %d 部分\n", i)
-		res += v
-		res += "\n"
-	}
-	return res
+	return string(data)
 }
