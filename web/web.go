@@ -20,6 +20,13 @@ func Handle() {
 
 func testHello(w http.ResponseWriter, r *http.Request) {
 	log.Println("Request URL: ", r.RequestURI)
+	cookie, err := r.Cookie("kkk")
+	if err != nil {
+		http.SetCookie(w, &http.Cookie{Name: "kkk", Value: "vvv"})
+	} else {
+		log.Printf("a cookie: %s\n", cookie.Value)
+	}
+
 	mailMsg, ok := module.Store.Get().(*module.MailMsg)
 	if !ok {
 		w.Write([]byte("no data!"))
