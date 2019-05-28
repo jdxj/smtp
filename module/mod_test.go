@@ -9,6 +9,7 @@ import (
 	"golang.org/x/text/transform"
 	"io"
 	"io/ioutil"
+	"mime"
 	"mime/multipart"
 	"net/mail"
 	"net/textproto"
@@ -275,4 +276,29 @@ func TestNewReceiver_Mail2(t *testing.T) {
 		fmt.Printf("\tlen: %d, content: %s", n, buf[:n])
 		i++
 	}
+}
+
+func TestGoParseMediaType(t *testing.T) {
+	msg, err := mail.ReadMessage(strings.NewReader(data))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	media, param, err := mime.ParseMediaType(msg.Header["Content-Type"][0])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("media: ", media)
+	for k, v := range param {
+		fmt.Println("k:", k)
+		fmt.Println(v)
+	}
+}
+
+func TestStore(t *testing.T) {
+	s := &Store{}
+	s.Add(2)
+	fmt.Println("ok")
 }

@@ -1,8 +1,17 @@
 package main
 
-import "./module"
+import (
+	"./module"
+	"log"
+	"time"
+)
+import "./web"
 
 func main() {
 	s := module.SMTPServer{}
-	s.ListenAndAccept()
+	go s.ListenAndAccept()
+	go web.Handle()
+
+	log.Println("sleep...")
+	time.Sleep(10 * time.Minute)
 }

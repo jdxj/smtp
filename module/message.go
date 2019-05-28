@@ -8,9 +8,9 @@ import (
 	"golang.org/x/text/transform"
 	"io/ioutil"
 	"log"
+	"mime"
 	"mime/multipart"
 	"net/mail"
-	"strings"
 )
 
 // Command 用于描述 SMTP 中的命令.
@@ -58,17 +58,12 @@ func (m *MailMsg) String() string {
 
 // ParseMail 用于解析 multipart/alternative 邮件部分
 func (m *MailMsg) ParseMail() {
-	ct := m.ParseHeaderContentType()
-	if ct == nil {
+	boundary := m.ExtractBoundary()
+	if boundary == "" {
 		return
 	}
-	nextPart, ok := ct["boundary"]
-	if !ok {
-		return
-	}
-	nextPart = strings.Trim(nextPart, "\"")
 
-	pReader := multipart.NewReader(m.msg.Body, nextPart)
+	pReader := multipart.NewReader(m.msg.Body, boundary)
 	var res []*multipart.Part
 	var contents []string
 	for part, err := pReader.NextPart(); err == nil; part, err = pReader.NextPart() {
@@ -81,28 +76,14 @@ func (m *MailMsg) ParseMail() {
 	m.contents = contents
 }
 
-func (m *MailMsg) ParseHeaderContentType() map[string]string {
-	v, ok := m.msg.Header["Content-Type"]
-	if !ok || len(v) < 1 {
-		log.Println("没有找到 Content-Type 或其值!")
-		return nil
+func (m *MailMsg) ExtractBoundary() string {
+	ct := m.msg.Header["Content-Type"][0]
+	media, param, err := mime.ParseMediaType(ct)
+	if err != nil || media != "multipart/alternative" {
+		return ""
 	}
 
-	res := make(map[string]string)
-	// v 的长度可能大于1, 大部分为1.
-	for _, v1 := range v {
-		parts := strings.Split(v1, ";")
-		for _, part := range parts {
-			part = strings.TrimSpace(part)
-
-			if idx := strings.Index(part, "="); idx < 0 {
-				res[part] = ""
-			} else {
-				res[part[:idx]] = part[idx+1:]
-			}
-		}
-	}
-	return res
+	return param["boundary"]
 }
 
 // todo: 使用 part.Header 指定编码解码.
