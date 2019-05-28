@@ -35,6 +35,8 @@ func (rep *Reply) String() string {
 	return fmt.Sprintf("%d %s\r\n", rep.StateCode, rep.Text)
 }
 
+// todo: 更好的格式化输出
+
 type MailMsg struct {
 	msg   *mail.Message
 	parts []*multipart.Part

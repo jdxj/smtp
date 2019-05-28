@@ -1,11 +1,13 @@
 package main
 
 import (
-	"./module"
 	"log"
+	"smtp/module"
+	"smtp/web"
 	"time"
 )
-import "./web"
+
+// todo: 生成唯一邮件地址.
 
 func main() {
 	s := module.SMTPServer{}

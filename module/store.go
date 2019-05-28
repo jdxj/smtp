@@ -5,29 +5,38 @@ import (
 	"sync"
 )
 
-type Store struct {
+var Store *store
+
+func init() {
+	Store = &store{}
+	Store.list = list.New()
+}
+
+type store struct {
 	mu   sync.Mutex
 	list *list.List
 }
 
-func (s *Store) Get() interface{} {
-	var v interface{}
+func (s *store) Get() interface{} {
 	s.mu.Lock()
-	if s.list == nil {
-		s.list = list.New()
-	}
+	defer s.mu.Unlock()
+
 	e := s.list.Front()
-	v = e.Value
+	if e == nil {
+		return nil
+	}
+	v := e.Value
 	s.list.Remove(e)
-	s.mu.Unlock()
 	return v
 }
 
-func (s *Store) Add(v interface{}) {
+func (s *store) Add(v interface{}) {
 	s.mu.Lock()
-	if s.list == nil {
-		s.list = list.New()
-	}
+	defer s.mu.Unlock()
+
 	s.list.PushBack(v)
-	s.mu.Unlock()
+}
+
+func (s *store) Len() int {
+	return s.list.Len()
 }

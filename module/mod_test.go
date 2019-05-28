@@ -298,7 +298,14 @@ func TestGoParseMediaType(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	s := &Store{}
+	s := &store{}
+	fmt.Println("len: ", s.Len())
+
 	s.Add(2)
-	fmt.Println("ok")
+	fmt.Println("len: ", s.Len())
+
+	if length, ok := s.Get().(int);ok {
+		fmt.Println("element: ", length)
+		fmt.Println("len: ", s.Len())
+	}
 }

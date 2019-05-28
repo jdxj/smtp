@@ -54,14 +54,14 @@ func (rer *Receiver) Start() {
 			rer.WriteReply(rer.ReplyDATA())
 			mailMsg, err := rer.ReadMail()
 			if err == nil {
-				// todo: 存储 MailMsg
 				mailMsg.ParseMail()
-				log.Printf("mail is: %s", mailMsg)
+				Store.Add(mailMsg)
 			} else {
 				rer.WriteReply(rer.ReplyDataFailure())
 			}
 		case ".":
 			rer.WriteReply(rer.ReplyDataEnd())
+		case "":
 		case "quit":
 			rer.WriteReply(rer.ReplyQUIT())
 			break

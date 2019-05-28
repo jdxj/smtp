@@ -33,6 +33,9 @@ func (ss *SMTPServer) ListenAndAccept() {
 			log.Println("接受新连接!")
 			rer := NewReceiver(conn)
 			rer.Start()
+			log.Printf("server store addr: %p", Store)
+			log.Printf("server store list addr: %p", Store.list)
+			log.Printf("server store len: %d", Store.Len())
 		}()
 	}
 }
