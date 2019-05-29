@@ -1,16 +1,21 @@
 package web
 
 import (
+	"html/template"
 	"log"
 	"net/http"
 	"smtp/module"
+	"smtp/util"
+	"smtp/web/tpl"
+	"smtp/web/tpldata"
 )
 
 type Server struct {
 }
 
 func Handle() {
-	http.HandleFunc("/", testHello)
+	http.HandleFunc("/", Index)
+	http.HandleFunc("/favicon.ico", Favicon)
 	http.HandleFunc("/hel", testHello)
 	err := http.ListenAndServe(":8025", nil)
 	if err != nil {
@@ -33,4 +38,26 @@ func testHello(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte(mailMsg.String()))
+}
+
+func Index(w http.ResponseWriter, r *http.Request) {
+	temp, err := template.New("index").Parse(tpl.Index)
+	if err != nil {
+		w.Write([]byte("no data1!"))
+		return
+	}
+
+	data := tpldata.MailMod{
+		Addr: util.IDGen.GetID() + tpldata.AddrSuf,
+	}
+	err = temp.Execute(w, data)
+	if err != nil {
+		log.Println(err)
+		w.Write([]byte("no data2!"))
+		return
+	}
+}
+
+func Favicon(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("no favicon!"))
 }

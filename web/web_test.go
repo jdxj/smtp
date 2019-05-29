@@ -18,3 +18,10 @@ func TestWeb_ListenAndAccept(t *testing.T) {
 func Hello(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("abc"))
 }
+
+func TestStr2Bit(t *testing.T) {
+	str := "abc"
+	fmt.Printf("%b\n", []byte(str))
+	str = "1011100111011100011111111011110"
+	fmt.Println(len(str))
+}
