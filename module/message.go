@@ -88,6 +88,24 @@ func (m *MailMsg) ExtractBoundary() string {
 	return param["boundary"]
 }
 
+func (m *MailMsg) FromAddr() string {
+	preAddr := m.msg.Header["From"][0]
+	addr, err := mail.ParseAddress(preAddr)
+	if err != nil {
+		return ""
+	}
+	return addr.Address
+}
+
+func (m *MailMsg) ToAddr() string {
+	preAddr := m.msg.Header["To"][0]
+	addr, err := mail.ParseAddress(preAddr)
+	if err != nil {
+		return ""
+	}
+	return addr.Address
+}
+
 // todo: 使用 part.Header 指定编码解码.
 func Decode(part *multipart.Part) string {
 	if part == nil {

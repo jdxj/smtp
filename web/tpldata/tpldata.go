@@ -3,7 +3,8 @@ package tpldata
 const AddrSuf = "@mail.aaronkir.xyz"
 
 type MailMod struct {
-	Addr string
+	Addr    string
+	Content string
 }
 
 type IDMod struct {

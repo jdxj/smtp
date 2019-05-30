@@ -297,15 +297,25 @@ func TestGoParseMediaType(t *testing.T) {
 	}
 }
 
-func TestStore(t *testing.T) {
-	s := &store{}
-	fmt.Println("len: ", s.Len())
-
-	s.Add(2)
-	fmt.Println("len: ", s.Len())
-
-	if length, ok := s.Get().(int);ok {
-		fmt.Println("element: ", length)
-		fmt.Println("len: ", s.Len())
+func TestMailAddrParse(t *testing.T) {
+	msg, err := mail.ReadMessage(strings.NewReader(data))
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
+	vs, ok := msg.Header["From"]
+	if !ok {
+		fmt.Println("no From!")
+		return
+	}
+
+	addr, err := mail.ParseAddress(vs[0])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(addr)
+	fmt.Println(addr.Name)
+	fmt.Println(addr.Address)
 }

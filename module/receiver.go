@@ -55,7 +55,7 @@ func (rer *Receiver) Start() {
 			mailMsg, err := rer.ReadMail()
 			if err == nil {
 				mailMsg.ParseMail()
-				Store.Add(mailMsg)
+				Store.Store(mailMsg.ToAddr(), mailMsg)
 			} else {
 				rer.WriteReply(rer.ReplyDataFailure())
 			}

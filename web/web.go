@@ -14,9 +14,10 @@ type Server struct {
 }
 
 func Handle() {
-	http.HandleFunc("/", Index)
+	http.HandleFunc("/", testHello)
 	http.HandleFunc("/favicon.ico", Favicon)
-	http.HandleFunc("/hel", testHello)
+	http.HandleFunc("/helo", testHello)
+	http.HandleFunc("/mail", GetMail)
 	err := http.ListenAndServe(":8025", nil)
 	if err != nil {
 		log.Fatalln(err)
@@ -24,24 +25,11 @@ func Handle() {
 }
 
 func testHello(w http.ResponseWriter, r *http.Request) {
-	log.Println("Request URL: ", r.RequestURI)
-	cookie, err := r.Cookie("kkk")
-	if err != nil {
-		http.SetCookie(w, &http.Cookie{Name: "kkk", Value: "vvv"})
-	} else {
-		log.Printf("a cookie: %s\n", cookie.Value)
-	}
-
-	mailMsg, ok := module.Store.Get().(*module.MailMsg)
-	if !ok {
-		w.Write([]byte("no data!"))
-		return
-	}
-	w.Write([]byte(mailMsg.String()))
+	w.Write([]byte("hello world!"))
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	temp, err := template.New("index").Parse(tpl.Index)
+	temp, err := template.New("index").Parse(tpl.IndexTpl)
 	if err != nil {
 		w.Write([]byte("no data1!"))
 		return
@@ -60,4 +48,39 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 func Favicon(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("no favicon!"))
+}
+
+func GetMail(w http.ResponseWriter, r *http.Request) {
+	//cookie, err := r.Cookie("id")
+	log.Println("Header: ", r.Header)
+	log.Println("RemoteAddr", r.RemoteAddr)
+
+	addrpfix, ok := module.Store.Load(r.RemoteAddr)
+	if ok { // 找到 user 标识
+		addrStr := addrpfix.(string)
+		mailMsgI, ok := module.Store.Load(addrStr + tpldata.AddrSuf)
+		if ok {
+			mailMsg := mailMsgI.(*module.MailMsg)
+			mailMod := tpldata.MailMod{
+				Addr:    mailMsg.ToAddr(),
+				Content: mailMsg.String(),
+			}
+
+			temp, err := template.New("mailtpl").Parse(tpl.MailTpl)
+			if err != nil {
+				log.Println(err)
+				w.Write([]byte("internal error"))
+				return
+			}
+			temp.Execute(w, mailMod)
+		} else {
+			w.Write([]byte("not receive mail!\n"))
+			w.Write([]byte("mail addr: " + addrStr + tpldata.AddrSuf))
+		}
+
+	} else {
+		pfx := util.IDGen.GetID()
+		module.Store.Store(r.RemoteAddr, pfx)
+		w.Write([]byte("mail addr: " + pfx + tpldata.AddrSuf))
+	}
 }
