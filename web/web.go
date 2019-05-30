@@ -8,7 +8,10 @@ import (
 	"smtp/util"
 	"smtp/web/tpl"
 	"smtp/web/tpldata"
+	"time"
 )
+
+const Dur time.Duration = 10 * time.Minute
 
 type Server struct {
 }
@@ -55,10 +58,10 @@ func GetMail(w http.ResponseWriter, r *http.Request) {
 	log.Println("Header: ", r.Header)
 	log.Println("RemoteAddr", r.RemoteAddr)
 
-	addrpfix, ok := module.Store.Load(r.RemoteAddr)
+	addrpfix, ok := module.Store.M.Load(r.RemoteAddr)
 	if ok { // 找到 user 标识
 		addrStr := addrpfix.(string)
-		mailMsgI, ok := module.Store.Load(addrStr + tpldata.AddrSuf)
+		mailMsgI, ok := module.Store.M.Load(addrStr)
 		if ok {
 			mailMsg := mailMsgI.(*module.MailMsg)
 			mailMod := tpldata.MailMod{
@@ -75,12 +78,13 @@ func GetMail(w http.ResponseWriter, r *http.Request) {
 			temp.Execute(w, mailMod)
 		} else {
 			w.Write([]byte("not receive mail!\n"))
-			w.Write([]byte("mail addr: " + addrStr + tpldata.AddrSuf))
+			w.Write([]byte("mail addr: " + addrStr))
 		}
 
 	} else {
 		pfx := util.IDGen.GetID()
-		module.Store.Store(r.RemoteAddr, pfx)
+		module.Store.M.Store(r.RemoteAddr, pfx+tpldata.AddrSuf)
+		module.Store.DelUser(Dur, r.RemoteAddr)
 		w.Write([]byte("mail addr: " + pfx + tpldata.AddrSuf))
 	}
 }

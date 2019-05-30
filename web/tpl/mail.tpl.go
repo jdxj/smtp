@@ -6,7 +6,7 @@ const MailTpl = `<html>
 	<title>temp mail</title>
 </head>
 <body>
-	mail addr: {{.Addr}}
-	content  : {{.Content}}
+	邮件地址: {{.Addr}}
+	邮件内容: {{.Content}}
 </body>
 </html>`
