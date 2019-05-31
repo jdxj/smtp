@@ -2,7 +2,6 @@ package web
 
 import (
 	"html/template"
-	"log"
 	"net/http"
 	"smtp/module"
 	"smtp/util"
@@ -10,17 +9,19 @@ import (
 	"smtp/web/tpldata"
 )
 
-type Server struct {
+type HTTPServer struct {
 }
 
-func Handle() {
+func (s *HTTPServer) Handle() {
 	http.HandleFunc("/", testHello)
 	http.HandleFunc("/favicon.ico", Favicon)
 	http.HandleFunc("/helo", testHello)
 	http.HandleFunc("/mail", GetMail)
+
+	util.HTTPLog.Println("Http server started!")
 	err := http.ListenAndServe(":8025", nil)
 	if err != nil {
-		log.Fatalln(err)
+		util.HTTPLog.Fatalln(err)
 	}
 }
 
@@ -40,7 +41,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 	err = temp.Execute(w, data)
 	if err != nil {
-		log.Println(err)
+		util.HTTPLog.Println(err)
 		w.Write([]byte("no data2!"))
 		return
 	}
@@ -51,10 +52,6 @@ func Favicon(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMail(w http.ResponseWriter, r *http.Request) {
-	//cookie, err := r.Cookie("id")
-	log.Println("Header: ", r.Header)
-	log.Println("RemoteAddr", r.RemoteAddr)
-
 	addrpfix, ok := module.Store.M.Load(r.RemoteAddr)
 	if ok { // 找到 user 标识
 		addrStr := addrpfix.(string)
@@ -68,7 +65,7 @@ func GetMail(w http.ResponseWriter, r *http.Request) {
 
 			temp, err := template.New("mailtpl").Parse(tpl.MailTpl)
 			if err != nil {
-				log.Println(err)
+				util.HTTPLog.Println(err)
 				w.Write([]byte("internal error"))
 				return
 			}

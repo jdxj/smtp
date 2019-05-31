@@ -7,10 +7,10 @@ import (
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 	"io/ioutil"
-	"log"
 	"mime"
 	"mime/multipart"
 	"net/mail"
+	"smtp/util"
 )
 
 // Command 用于描述 SMTP 中的命令.
@@ -114,20 +114,20 @@ func Decode(part *multipart.Part) string {
 
 	data, err := ioutil.ReadAll(part)
 	if err != nil {
-		log.Println(err)
+		util.SMTPLog.Println(err)
 		return ""
 	}
 
 	data, err = base64.StdEncoding.DecodeString(string(data))
 	if err != nil {
-		log.Println("decode err: ", err)
+		util.SMTPLog.Println("decode err: ", err)
 		return ""
 	}
 
 	sRd := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder())
 	data, err = ioutil.ReadAll(sRd)
 	if err != nil {
-		log.Println("err: ", err)
+		util.SMTPLog.Println("err: ", err)
 		return ""
 	}
 	return string(data)

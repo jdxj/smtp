@@ -19,14 +19,15 @@ func main() {
 }
 
 func StartSmtp(wg *sync.WaitGroup) {
-	s := module.SMTPServer{}
-	s.ListenAndAccept()
+	smtpServer := &module.SMTPServer{}
+	smtpServer.ListenAndAccept()
 
 	wg.Done()
 }
 
 func StartHttp(wg *sync.WaitGroup) {
-	web.Handle()
+	httpServer := &web.HTTPServer{}
+	httpServer.Handle()
 
 	wg.Done()
 }

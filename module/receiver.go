@@ -3,7 +3,6 @@ package module
 import (
 	"bufio"
 	"io"
-	"log"
 	"net"
 	"net/mail"
 	"smtp/util"
@@ -17,7 +16,7 @@ func NewReceiver(conn net.Conn) *Receiver {
 		bfr:  bufio.NewReader(conn),
 		bfw:  bufio.NewWriter(conn),
 	}
-	log.Println("Create a Receiver!")
+	util.SMTPLog.Println("Create a Receiver!")
 	return rer
 }
 
@@ -42,7 +41,7 @@ func (rer *Receiver) Start() {
 		if com == nil {
 			break
 		}
-		log.Println("cmd is: ", com.Cmd)
+		util.SMTPLog.Println("cmd is: ", com.Cmd)
 
 		switch com.Cmd {
 		case "ehlo":
@@ -68,20 +67,20 @@ func (rer *Receiver) Start() {
 			rer.WriteReply(rer.ReplyQUIT())
 			break
 		default:
-			log.Printf("Unresolved command: %s, data: %s", com.Cmd, com.String())
+			util.SMTPLog.Printf("Unresolved command: %s, data: %s", com.Cmd, com.String())
 		}
 	}
-	log.Println("session is over!")
+	util.SMTPLog.Println("session is over!")
 }
 
 func (rer *Receiver) ReadCommand() *Command {
 	for {
 		line, err := rer.bfr.ReadString('\n')
 		if err == io.EOF {
-			log.Println("read eof, err:", err)
+			util.SMTPLog.Println("read eof, err:", err)
 			return nil
 		} else if err != nil {
-			log.Println("err when read Command: ", err)
+			util.SMTPLog.Println("err when read Command: ", err)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -90,7 +89,7 @@ func (rer *Receiver) ReadCommand() *Command {
 		params := strings.Split(line, " ")
 		count := len(params)
 		if count == 0 {
-			log.Println("read a bare line")
+			util.SMTPLog.Println("read a bare line")
 			continue
 		} else if count > 0 {
 			cmd := params[0]
@@ -118,13 +117,13 @@ func (rer *Receiver) ReadMail() (*MailMsg, error) {
 
 func (rer *Receiver) WriteReply(rep *Reply) {
 	if rep == nil {
-		log.Println("rep is nil")
+		util.SMTPLog.Println("rep is nil")
 		return
 	}
 
 	n, err := rer.bfw.WriteString(rep.String())
 	if err != nil {
-		log.Printf("write count: %d. err: %s\n", n, err)
+		util.SMTPLog.Printf("write count: %d. err: %s\n", n, err)
 		return
 	}
 
