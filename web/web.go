@@ -18,6 +18,8 @@ func (s *HTTPServer) Handle() {
 	http.HandleFunc("/helo", testHello)
 	http.HandleFunc("/mail", GetMail)
 
+	http.Handle("/static", http.FileServer(http.Dir("web/static")))
+
 	util.HTTPLog.Println("Http server started!")
 	err := http.ListenAndServe(":8025", nil)
 	if err != nil {
