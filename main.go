@@ -4,15 +4,29 @@ import (
 	"log"
 	"smtp/module"
 	"smtp/web"
-	"time"
+	"sync"
 )
 
 func main() {
-	s := module.SMTPServer{}
-	go s.ListenAndAccept()
-	go web.Handle()
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
 
-	log.Println("sleep...")
-	time.Sleep(20 * time.Minute)
+	go StartSmtp(wg)
+	go StartHttp(wg)
+
+	wg.Wait()
 	log.Println("Server quits actively!")
+}
+
+func StartSmtp(wg *sync.WaitGroup) {
+	s := module.SMTPServer{}
+	s.ListenAndAccept()
+
+	wg.Done()
+}
+
+func StartHttp(wg *sync.WaitGroup) {
+	web.Handle()
+
+	wg.Done()
 }

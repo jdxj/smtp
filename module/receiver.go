@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 	"net/mail"
-	"smtp/web"
+	"smtp/util"
 	"strings"
 	"time"
 )
@@ -57,7 +57,7 @@ func (rer *Receiver) Start() {
 			if err == nil {
 				mailMsg.ParseMail()
 				Store.M.Store(mailMsg.ToAddr(), mailMsg)
-				Store.DelMail(web.Dur, mailMsg.ToAddr())
+				Store.DelMail(util.Dur, mailMsg.ToAddr())
 			} else {
 				rer.WriteReply(rer.ReplyDataFailure())
 			}

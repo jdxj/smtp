@@ -8,10 +8,7 @@ import (
 	"smtp/util"
 	"smtp/web/tpl"
 	"smtp/web/tpldata"
-	"time"
 )
-
-const Dur time.Duration = 10 * time.Minute
 
 type Server struct {
 }
@@ -84,7 +81,7 @@ func GetMail(w http.ResponseWriter, r *http.Request) {
 	} else {
 		pfx := util.IDGen.GetID()
 		module.Store.M.Store(r.RemoteAddr, pfx+tpldata.AddrSuf)
-		module.Store.DelUser(Dur, r.RemoteAddr)
+		module.Store.DelUser(util.Dur, r.RemoteAddr)
 		w.Write([]byte("mail addr: " + pfx + tpldata.AddrSuf))
 	}
 }
