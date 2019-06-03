@@ -118,17 +118,47 @@ func Decode(part *multipart.Part) string {
 		return ""
 	}
 
-	data, err = base64.StdEncoding.DecodeString(string(data))
+	// 解析传输编码
+	media, _, err := mime.ParseMediaType(part.Header["Content-Transfer-Encoding"][0])
 	if err != nil {
-		util.SMTPLog.Println("decode err: ", err)
+		util.SMTPLog.Println(err)
+		return ""
+	}
+	switch media {
+	case "base64":
+		data, err = base64.StdEncoding.DecodeString(string(data))
+		if err != nil {
+			util.SMTPLog.Println("decode err: ", err)
+			return ""
+		}
+	case "7bit":
+
+	}
+
+	// 解析字符集编码
+	_, param, err := mime.ParseMediaType(part.Header["Content-Type"][0])
+	if err != nil {
+		util.SMTPLog.Println(err)
+		return ""
+	}
+	charset := param["charset"]
+	switch charset {
+	case "GBK", "gb18030", "gb2310":
+		sRd := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder())
+		data, err = ioutil.ReadAll(sRd)
+		if err != nil {
+			util.SMTPLog.Println("err: ", err)
+			return ""
+		}
+	default:
+		util.SMTPLog.Println("not have parse: ", charset)
 		return ""
 	}
 
-	sRd := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder())
-	data, err = ioutil.ReadAll(sRd)
-	if err != nil {
-		util.SMTPLog.Println("err: ", err)
-		return ""
-	}
 	return string(data)
+}
+
+// todo
+func ParseTransferEncoding(data []byte) []byte {
+	return nil
 }

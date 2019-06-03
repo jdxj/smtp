@@ -25,3 +25,10 @@ func TestStr2Bit(t *testing.T) {
 	str = "1011100111011100011111111011110"
 	fmt.Println(len(str))
 }
+
+func TestHttpFileServer(t *testing.T) {
+	err := http.ListenAndServe(":8080", http.FileServer(http.Dir("static")))
+	if err != nil {
+		fmt.Println(err)
+	}
+}

@@ -13,12 +13,13 @@ type HTTPServer struct {
 }
 
 func (s *HTTPServer) Handle() {
-	http.HandleFunc("/", testHello)
+	// todo: 路径匹配规则需要研究
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static/"))))
+
 	http.HandleFunc("/favicon.ico", Favicon)
 	http.HandleFunc("/helo", testHello)
 	http.HandleFunc("/mail", GetMail)
-
-	http.Handle("/static", http.FileServer(http.Dir("web/static")))
+	http.HandleFunc("/", testHello)
 
 	util.HTTPLog.Println("Http server started!")
 	err := http.ListenAndServe(":8025", nil)
@@ -28,7 +29,7 @@ func (s *HTTPServer) Handle() {
 }
 
 func testHello(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello world!"))
+	w.Write([]byte("prefix: /, hello world!"))
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +51,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func Favicon(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("no favicon!"))
+	http.Redirect(w, r, "/static/favicon.ico", 301)
 }
 
 func GetMail(w http.ResponseWriter, r *http.Request) {

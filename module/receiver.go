@@ -52,6 +52,7 @@ func (rer *Receiver) Start() {
 			rer.WriteReply(rer.ReplyRCPT())
 		case "data":
 			rer.WriteReply(rer.ReplyDATA())
+			util.SMTPLog.Println("read mail...")
 			mailMsg, err := rer.ReadMail()
 			if err == nil {
 				mailMsg.ParseMail()
@@ -60,6 +61,7 @@ func (rer *Receiver) Start() {
 			} else {
 				rer.WriteReply(rer.ReplyDataFailure())
 			}
+			util.SMTPLog.Println("read mail end...")
 		case ".":
 			rer.WriteReply(rer.ReplyDataEnd())
 		case "":
@@ -77,13 +79,14 @@ func (rer *Receiver) ReadCommand() *Command {
 	for {
 		line, err := rer.bfr.ReadString('\n')
 		if err == io.EOF {
-			util.SMTPLog.Println("read eof, err:", err)
+			util.SMTPLog.Println("read command err:", err)
 			return nil
 		} else if err != nil {
 			util.SMTPLog.Println("err when read Command: ", err)
 			time.Sleep(time.Second)
 			continue
 		}
+
 		line = strings.TrimSuffix(line, "\r\n")
 		// todo: 对命令以及其参数的更详细的解析
 		params := strings.Split(line, " ")
