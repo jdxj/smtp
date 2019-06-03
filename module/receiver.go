@@ -11,12 +11,12 @@ import (
 )
 
 func NewReceiver(conn net.Conn) *Receiver {
+	util.SMTPLog.Println("Create a Receiver!")
 	rer := &Receiver{
 		conn: conn,
 		bfr:  bufio.NewReader(conn),
 		bfw:  bufio.NewWriter(conn),
 	}
-	util.SMTPLog.Println("Create a Receiver!")
 	return rer
 }
 
@@ -28,6 +28,7 @@ type Receiver struct {
 
 func (rer *Receiver) Start() {
 	defer rer.conn.Close()
+	defer util.SMTPLog.Println("Session is over!")
 	// 问候
 	rer.WriteReply(rer.ReplyGreetings())
 
@@ -39,9 +40,8 @@ func (rer *Receiver) Start() {
 		// todo: 邮件事务监控
 		com := rer.ReadCommand()
 		if com == nil {
-			break
+			continue
 		}
-		util.SMTPLog.Println("cmd is: ", com.Cmd)
 
 		switch com.Cmd {
 		case "ehlo":
@@ -52,59 +52,76 @@ func (rer *Receiver) Start() {
 			rer.WriteReply(rer.ReplyRCPT())
 		case "data":
 			rer.WriteReply(rer.ReplyDATA())
-			util.SMTPLog.Println("read mail...")
 			mailMsg, err := rer.ReadMail()
-			if err == nil {
-				mailMsg.ParseMail()
-				Store.M.Store(mailMsg.ToAddr(), mailMsg)
-				Store.DelMail(util.Dur, mailMsg.ToAddr())
-			} else {
+			if err != nil {
 				rer.WriteReply(rer.ReplyDataFailure())
+				return
 			}
-			util.SMTPLog.Println("read mail end...")
+
+			err = mailMsg.ParseMail()
+			if err != io.EOF {
+				rer.WriteReply(rer.ReplyDataFailure())
+				return
+			}
+			rer.WriteReply(rer.ReplyDataEnd())
+
+			// 存储邮件
+			Store.M.Store(mailMsg.ToAddr(), mailMsg)
+			Store.DelMail(util.Dur, mailMsg.ToAddr())
 		case ".":
 			rer.WriteReply(rer.ReplyDataEnd())
-		case "":
 		case "quit":
 			rer.WriteReply(rer.ReplyQUIT())
-			break
+			return
 		default:
+			rer.WriteReply(rer.ReplyWongCmd())
 			util.SMTPLog.Printf("Unresolved command: %s, data: %s", com.Cmd, com.String())
 		}
 	}
-	util.SMTPLog.Println("session is over!")
+
 }
 
+const readDur = 5 * time.Second
+
 func (rer *Receiver) ReadCommand() *Command {
-	for {
+	// 用于超时检测
+	lineChan := make(chan string)
+
+	go func() {
 		line, err := rer.bfr.ReadString('\n')
-		if err == io.EOF {
-			util.SMTPLog.Println("read command err:", err)
-			return nil
-		} else if err != nil {
-			util.SMTPLog.Println("err when read Command: ", err)
-			time.Sleep(time.Second)
-			continue
+		if err != nil {
+			util.SMTPLog.Println(err)
+			lineChan <- ""
+			return
 		}
+		lineChan <- line
+	}()
 
-		line = strings.TrimSuffix(line, "\r\n")
-		// todo: 对命令以及其参数的更详细的解析
-		params := strings.Split(line, " ")
-		count := len(params)
-		if count == 0 {
-			util.SMTPLog.Println("read a bare line")
-			continue
-		} else if count > 0 {
-			cmd := params[0]
-			cmd = strings.TrimSpace(cmd)
-			cmd = strings.ToLower(cmd)
-
-			com := &Command{
-				Cmd: cmd,
-			}
-			return com
+	var line string
+	select {
+	case line = <-lineChan:
+	case <-time.After(readDur):
+		util.SMTPLog.Println("Read command timeout!")
+		return &Command{
+			Cmd: "quit",
 		}
 	}
+
+	line = strings.TrimSuffix(line, "\r\n")
+	if line == "" {
+		util.SMTPLog.Println("Read a blank line!")
+		return nil
+	}
+
+	line = strings.ToLower(line)
+	util.SMTPLog.Println("Command line is: ", line)
+
+	params := strings.Split(line, " ")
+	com := &Command{
+		Cmd:   params[0],
+		Param: strings.Join(params[1:], " "),
+	}
+	return com
 }
 
 func (rer *Receiver) ReadMail() (*MailMsg, error) {
@@ -185,6 +202,14 @@ func (rer *Receiver) ReplyQUIT() *Reply {
 	rep := &Reply{
 		StateCode: 221,
 		Text:      "QUIT.",
+	}
+	return rep
+}
+
+func (rer *Receiver) ReplyWongCmd() *Reply {
+	rep := &Reply{
+		StateCode: 550,
+		Text:      "Syntax error, command unrecognized.",
 	}
 	return rep
 }

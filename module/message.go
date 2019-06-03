@@ -15,8 +15,8 @@ import (
 
 // Command 用于描述 SMTP 中的命令.
 type Command struct {
-	Cmd    string
-	Params map[string][]string
+	Cmd   string
+	Param string
 }
 
 // todo: 实现
@@ -59,16 +59,18 @@ func (m *MailMsg) String() string {
 }
 
 // ParseMail 用于解析 multipart/alternative 邮件部分
-func (m *MailMsg) ParseMail() {
+func (m *MailMsg) ParseMail() error {
 	boundary := m.ExtractBoundary()
 	if boundary == "" {
-		return
+		return fmt.Errorf("%s\n", "Cann't find boundary!")
 	}
 
 	pReader := multipart.NewReader(m.msg.Body, boundary)
 	var res []*multipart.Part
 	var contents []string
-	for part, err := pReader.NextPart(); err == nil; part, err = pReader.NextPart() {
+	var part *multipart.Part
+	var err error
+	for part, err = pReader.NextPart(); err == nil; part, err = pReader.NextPart() {
 		str := Decode(part)
 		contents = append(contents, str)
 		res = append(res, part)
@@ -76,6 +78,7 @@ func (m *MailMsg) ParseMail() {
 
 	m.parts = res
 	m.contents = contents
+	return err
 }
 
 func (m *MailMsg) ExtractBoundary() string {

@@ -16,8 +16,8 @@ func (ss *SMTPServer) ListenAndAccept() {
 	}
 	defer l.Close()
 
+	util.SMTPLog.Println("SMTP Server started!")
 	for {
-		util.SMTPLog.Println("等待连接!")
 		conn, err := l.Accept()
 		if err != nil {
 			util.SMTPLog.Println(err)
@@ -25,7 +25,6 @@ func (ss *SMTPServer) ListenAndAccept() {
 		}
 
 		go func() {
-			util.SMTPLog.Println("接受新连接!")
 			rer := NewReceiver(conn)
 			rer.Start()
 		}()
