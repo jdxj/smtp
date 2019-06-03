@@ -3,6 +3,7 @@ package module
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
@@ -11,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/mail"
 	"smtp/util"
+	"smtp/web/api"
 )
 
 // Command 用于描述 SMTP 中的命令.
@@ -19,9 +21,8 @@ type Command struct {
 	Param string
 }
 
-// todo: 实现
 func (com *Command) String() string {
-	return fmt.Sprintln("test string")
+	return fmt.Sprintf("Cmd: %s, Param: %s\n", com.Cmd, com.Param)
 }
 
 // Reply 用于描述 SMTP 中的回复.
@@ -35,8 +36,7 @@ func (rep *Reply) String() string {
 	return fmt.Sprintf("%d %s\r\n", rep.StateCode, rep.Text)
 }
 
-// todo: 更好的格式化输出
-
+// todo: json格式
 type MailMsg struct {
 	msg   *mail.Message
 	parts []*multipart.Part
@@ -107,6 +107,21 @@ func (m *MailMsg) ToAddr() string {
 		return ""
 	}
 	return addr.Address
+}
+
+func (m *MailMsg) Json() ([]byte, error) {
+	mj := &api.MailJson{}
+	mj.Header = m.msg.Header
+
+	for i, v := range m.parts {
+		pj := &api.PartJson{
+			Header:  v.Header,
+			Content: m.contents[i],
+		}
+		mj.Contents = append(mj.Contents, pj)
+	}
+
+	return json.Marshal(mj)
 }
 
 // todo: 使用 part.Header 指定编码解码.

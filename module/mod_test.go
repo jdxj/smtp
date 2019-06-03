@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
@@ -318,4 +319,49 @@ func TestMailAddrParse(t *testing.T) {
 	fmt.Println(addr)
 	fmt.Println(addr.Name)
 	fmt.Println(addr.Address)
+}
+
+type JsonTest2 struct {
+	Num int
+}
+
+type JsonTest struct {
+	M map[string]interface{}
+}
+
+type JsonTest3 struct {
+	M []*JsonTest2
+}
+
+func TestJson(t *testing.T) {
+	jt := &JsonTest{
+		M: make(map[string]interface{}),
+	}
+
+	jt21 := &JsonTest2{
+		Num: 1,
+	}
+	jt22 := &JsonTest2{
+		Num: 2,
+	}
+
+	jt.M["jt21"] = jt21
+	jt.M["jt22"] = jt22
+
+	data, err := json.Marshal(jt)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(data))
+
+	jt3 := &JsonTest3{}
+	jt3.M = append(jt3.M, jt21)
+	jt3.M = append(jt3.M, jt22)
+	data, err = json.Marshal(jt3)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(string(data))
 }

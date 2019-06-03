@@ -77,7 +77,6 @@ func GetMail(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("not receive mail!\n"))
 			w.Write([]byte("mail addr: " + addrStr))
 		}
-
 	} else {
 		pfx := util.IDGen.GetID()
 		module.Store.M.Store(r.RemoteAddr, pfx+tpldata.AddrSuf)
