@@ -2,6 +2,7 @@ package module
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"net"
 	"net/mail"
@@ -38,8 +39,11 @@ func (rer *Receiver) Start() {
 	// 收到 QUIT 就关闭连接.
 	for {
 		// todo: 邮件事务监控
-		com := rer.ReadCommand()
-		if com == nil {
+		com, err := rer.ReadCommand()
+		if err == io.EOF {
+			return
+		} else if err != nil {
+			util.SMTPLog.Println(err)
 			continue
 		}
 
@@ -83,15 +87,15 @@ func (rer *Receiver) Start() {
 
 const readDur = 5 * time.Second
 
-func (rer *Receiver) ReadCommand() *Command {
+func (rer *Receiver) ReadCommand() (*Command, error) {
 	// 用于超时检测
 	lineChan := make(chan string)
+	var eofErr error
 
 	go func() {
 		line, err := rer.bfr.ReadString('\n')
 		if err != nil {
-			util.SMTPLog.Println(err)
-			lineChan <- ""
+			eofErr = err
 			return
 		}
 		lineChan <- line
@@ -102,15 +106,12 @@ func (rer *Receiver) ReadCommand() *Command {
 	case line = <-lineChan:
 	case <-time.After(readDur):
 		util.SMTPLog.Println("Read command timeout!")
-		return &Command{
-			Cmd: "quit",
-		}
+		return &Command{Cmd: "quit",}, eofErr
 	}
 
 	line = strings.TrimSuffix(line, "\r\n")
 	if line == "" {
-		util.SMTPLog.Println("Read a blank line!")
-		return nil
+		return nil, fmt.Errorf("%s\n", "Read a blank line!")
 	}
 
 	line = strings.ToLower(line)
@@ -121,7 +122,7 @@ func (rer *Receiver) ReadCommand() *Command {
 		Cmd:   params[0],
 		Param: strings.Join(params[1:], " "),
 	}
-	return com
+	return com, nil
 }
 
 func (rer *Receiver) ReadMail() (*MailMsg, error) {
