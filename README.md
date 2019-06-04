@@ -9,7 +9,7 @@
 - MailHole 使用 Go 语言编写.
 - MailHole 是一个玩具, 用于接收一次性邮件. 如果你不想用自己的私人邮箱接收一些注册类邮件, 你可以使用 MailHole.
 - MailHole 尽量不使用第三方库.
-- MailHole 的[演示地址](http://test.aaronkir.xyz:8025/mail)
+- MailHole 的[演示地址](http://test.aaronkir.xyz:8025/mail).
 
 ## 快速开始
 

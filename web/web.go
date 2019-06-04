@@ -3,8 +3,8 @@ package web
 import (
 	"html/template"
 	"net/http"
-	"smtp/module"
 	"smtp/util"
+	"smtp/web/api"
 	"smtp/web/tpl"
 	"smtp/web/tpldata"
 )
@@ -17,8 +17,7 @@ func (s *HTTPServer) Handle() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static/"))))
 
 	http.HandleFunc("/favicon.ico", Favicon)
-	http.HandleFunc("/helo", testHello)
-	http.HandleFunc("/mail", GetMail)
+	http.HandleFunc("/mail", api.WriteJsonMail)
 	http.HandleFunc("/", testHello)
 
 	util.HTTPLog.Println("Http server started!")
@@ -50,37 +49,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Favicon 用于重定向到图标 url
 func Favicon(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/static/favicon.ico", 301)
-}
-
-func GetMail(w http.ResponseWriter, r *http.Request) {
-	addrpfix, ok := module.Store.M.Load(r.RemoteAddr)
-	if ok { // 找到 user 标识
-		addrStr := addrpfix.(string)
-		mailMsgI, ok := module.Store.M.Load(addrStr)
-		if ok {
-			mailMsg := mailMsgI.(*module.MailMsg)
-			mailMod := tpldata.MailMod{
-				Addr:    mailMsg.ToAddr(),
-				Content: mailMsg.String(),
-			}
-
-			temp, err := template.New("mailtpl").Parse(tpl.MailTpl)
-			if err != nil {
-				util.HTTPLog.Println(err)
-				w.Write([]byte("internal error"))
-				return
-			}
-			temp.Execute(w, mailMod)
-		} else {
-			w.Write([]byte("not receive mail!\n"))
-			w.Write([]byte("mail addr: " + addrStr))
-		}
-	} else {
-		pfx := util.IDGen.GetID()
-		module.Store.M.Store(r.RemoteAddr, pfx+tpldata.AddrSuf)
-		module.Store.DelUser(util.Dur, r.RemoteAddr)
-		w.Write([]byte("mail addr: " + pfx + tpldata.AddrSuf))
-	}
 }

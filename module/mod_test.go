@@ -365,3 +365,11 @@ func TestJson(t *testing.T) {
 	}
 	fmt.Println(string(data))
 }
+
+func TestMimeHeader(t *testing.T) {
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Type", "text/html")
+	h.Add("Content-Type", `charset="gb18030"`)
+
+	fmt.Println(h)
+}

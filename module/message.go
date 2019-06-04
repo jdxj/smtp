@@ -12,7 +12,6 @@ import (
 	"mime/multipart"
 	"net/mail"
 	"smtp/util"
-	"smtp/web/api"
 )
 
 // Command 用于描述 SMTP 中的命令.
@@ -110,11 +109,14 @@ func (m *MailMsg) ToAddr() string {
 }
 
 func (m *MailMsg) Json() ([]byte, error) {
-	mj := &api.MailJson{}
-	mj.Header = m.msg.Header
+	mj := &MailJson{
+		Header: m.msg.Header,
+		Addr: m.ToAddr(),
+		Desc: "Receive a mail!",
+	}
 
 	for i, v := range m.parts {
-		pj := &api.PartJson{
+		pj := &PartJson{
 			Header:  v.Header,
 			Content: m.contents[i],
 		}
