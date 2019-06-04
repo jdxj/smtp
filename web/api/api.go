@@ -9,6 +9,7 @@ import (
 )
 
 func WriteJsonMail(w http.ResponseWriter, r *http.Request) {
+	RecordURL(r)
 	addr, ok := module.Store.M.Load(r.RemoteAddr)
 	if ok { // 找到 user 标识
 		addrStr := addr.(string)
@@ -72,4 +73,8 @@ func WriteTestJson(w http.ResponseWriter, r *http.Request) {
 
 	data, _ := json.Marshal(st)
 	w.Write(data)
+}
+
+func RecordURL(r *http.Request) {
+	util.HTTPLog.Printf("Method: %s, URL: %s\n", r.Method, r.URL)
 }
