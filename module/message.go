@@ -59,6 +59,7 @@ func (m *MailMsg) String() string {
 
 // ParseMail 用于解析 multipart/alternative 邮件部分
 func (m *MailMsg) ParseMail() error {
+	// todo: 如果不是 multipart, 需要重新构造 part.
 	boundary := m.ExtractBoundary()
 	if boundary == "" {
 		return fmt.Errorf("%s\n", "Cann't find boundary!")
@@ -81,6 +82,11 @@ func (m *MailMsg) ParseMail() error {
 }
 
 func (m *MailMsg) ExtractBoundary() string {
+	if _, ok := m.msg.Header["Content-Type"]; !ok {
+		// 可能不是 multipart
+		return ""
+	}
+
 	ct := m.msg.Header["Content-Type"][0]
 	media, param, err := mime.ParseMediaType(ct)
 	if err != nil || media != "multipart/alternative" {
@@ -139,42 +145,46 @@ func Decode(part *multipart.Part) string {
 	}
 
 	// 解析传输编码
-	media, _, err := mime.ParseMediaType(part.Header["Content-Transfer-Encoding"][0])
-	if err != nil {
-		util.SMTPLog.Println(err)
-		return ""
-	}
-	switch media {
-	case "base64":
-		data, err = base64.StdEncoding.DecodeString(string(data))
+	if cte, ok := part.Header["Content-Transfer-Encoding"]; ok {
+		media, _, err := mime.ParseMediaType(cte[0])
 		if err != nil {
-			util.SMTPLog.Println("decode err: ", err)
+			util.SMTPLog.Println(err)
 			return ""
 		}
-	case "7bit":
 
+		switch media {
+		case "base64":
+			data, err = base64.StdEncoding.DecodeString(string(data))
+			if err != nil {
+				util.SMTPLog.Println("decode err: ", err)
+				return ""
+			}
+		default:
+			util.SMTPLog.Println("Not resolved Content-Transfer-Encoding: ", media)
+		}
 	}
 
 	// 解析字符集编码
-	_, param, err := mime.ParseMediaType(part.Header["Content-Type"][0])
-	if err != nil {
-		util.SMTPLog.Println(err)
-		return ""
-	}
-	charset := param["charset"]
-	switch charset {
-	case "GBK", "gb18030", "gb2310":
-		sRd := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder())
-		data, err = ioutil.ReadAll(sRd)
+	if ct, ok := part.Header["Content-Type"]; ok {
+		_, param, err := mime.ParseMediaType(ct[0])
 		if err != nil {
-			util.SMTPLog.Println("err: ", err)
+			util.SMTPLog.Println(err)
 			return ""
 		}
-	default:
-		util.SMTPLog.Println("not have parse: ", charset)
-		return ""
-	}
 
+		charset := param["charset"]
+		switch charset {
+		case "GBK", "gb18030", "gb2310":
+			sRd := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder())
+			data, err = ioutil.ReadAll(sRd)
+			if err != nil {
+				util.SMTPLog.Println("err: ", err)
+				return ""
+			}
+		default:
+			util.SMTPLog.Println("Not resolved charset: ", charset)
+		}
+	}
 	return string(data)
 }
 
