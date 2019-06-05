@@ -2,10 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"smtp/module"
 	"smtp/util"
 	"smtp/web/tpldata"
+	"strconv"
+	"time"
 )
 
 func WriteJsonMail(w http.ResponseWriter, r *http.Request) {
@@ -77,4 +81,31 @@ func WriteTestJson(w http.ResponseWriter, r *http.Request) {
 
 func RecordURL(r *http.Request) {
 	util.HTTPLog.Printf("Method: %s, URL: %s\n", r.Method, r.URL)
+}
+
+func TestWebSocket(w http.ResponseWriter, r *http.Request) {
+	upgrader := &websocket.Upgrader{
+		//CheckOrigin: func(r *http.Request) bool {
+		//	return true
+		//},
+	}
+	wsConn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer wsConn.Close()
+
+	i := 0
+	for {
+		iStr := strconv.Itoa(i)
+		err = wsConn.WriteMessage(1, []byte(iStr))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		i++
+		time.Sleep(time.Second)
+	}
+
 }

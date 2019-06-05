@@ -15,6 +15,7 @@ func (s *HTTPServer) Handle() {
 	http.HandleFunc("/favicon.ico", Favicon)
 	http.HandleFunc("/mail", api.WriteJsonMail)
 	http.HandleFunc("/", Welcome)
+	http.HandleFunc("/ws", api.TestWebSocket)
 
 	util.HTTPLog.Println("Http server started!")
 	err := http.ListenAndServe(":8025", nil)
@@ -25,7 +26,7 @@ func (s *HTTPServer) Handle() {
 
 func Welcome(w http.ResponseWriter, r *http.Request) {
 	api.RecordURL(r)
-	w.Write([]byte("Hello World!"))
+	http.Redirect(w, r, "/static/index.html", 301)
 }
 
 // Favicon 用于重定向到图标 url

@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"testing"
 )
@@ -30,5 +31,34 @@ func TestHttpFileServer(t *testing.T) {
 	err := http.ListenAndServe(":8080", http.FileServer(http.Dir("static")))
 	if err != nil {
 		fmt.Println(err)
+	}
+}
+
+func TestWebSocket(t *testing.T) {
+	http.HandleFunc("/ws", handWS)
+	http.ListenAndServe(":8080", nil)
+}
+
+func handWS(w http.ResponseWriter, r *http.Request) {
+	upgrader := &websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+	wsConn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer wsConn.Close()
+
+	for {
+		mt, p, err := wsConn.ReadMessage()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println("message type: ", mt)
+		fmt.Println("data: ", p)
 	}
 }
