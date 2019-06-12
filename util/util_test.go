@@ -91,7 +91,24 @@ func TestChan(t *testing.T) {
 
 	for {
 		v, ok := <-c
-		fmt.Println(ok)
-		fmt.Println(v)
+		if ok {
+			fmt.Println(v)
+		} else {
+			fmt.Println("end!")
+			break
+		}
 	}
+}
+
+func TestNilChan(t *testing.T) {
+	var c chan int
+	go func() {
+		for v := range c {
+			fmt.Println("read v: ", v)
+		}
+	}()
+
+	close(c)
+	time.Sleep(10 * time.Second)
+	fmt.Println("main goroutine!")
 }
