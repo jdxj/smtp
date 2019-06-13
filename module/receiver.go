@@ -77,6 +77,8 @@ func (rer *Receiver) Start() {
 		case "quit":
 			rer.WriteReply(rer.ReplyQUIT())
 			return
+		case "reset":
+			rer.WriteReply(rer.ReplyRESET())
 		default:
 			rer.WriteReply(rer.ReplyWongCmd())
 			util.SMTPLog.Printf("Unresolved command: %s, data: %s", com.Cmd, com.String())
@@ -106,7 +108,7 @@ func (rer *Receiver) ReadCommand() (*Command, error) {
 	case line = <-lineChan:
 	case <-time.After(readDur):
 		util.SMTPLog.Println("Read command timeout!")
-		return &Command{Cmd: "quit",}, eofErr
+		return &Command{Cmd: "quit"}, eofErr
 	}
 
 	line = strings.TrimSuffix(line, "\r\n")
@@ -213,4 +215,8 @@ func (rer *Receiver) ReplyWongCmd() *Reply {
 		Text:      "Syntax error, command unrecognized.",
 	}
 	return rep
+}
+
+func (rer *Receiver) ReplyRESET() *Reply {
+	return rer.ReplyEHLO()
 }

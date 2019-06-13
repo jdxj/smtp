@@ -53,7 +53,7 @@ $ ./server
     - 对方尝试弱口令.
     - **对方仍不放弃攻击**.
 8. 解析 smtp 协议的命令及其参数.
-    - reset
+    - ![](https://img.shields.io/badge/-%E2%88%9A-brightgreen.svg) reset
     - 在一些奇怪命令后携带了类似脚本写法的参数.
     - auth login.
 9. smtp 命令出现乱码, 不清楚对方发送非 utf-8 编码, 还是二进制数据.

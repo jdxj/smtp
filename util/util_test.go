@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"testing"
 	"time"
@@ -69,14 +70,25 @@ func TestGoroutinePool(t *testing.T) {
 
 func BenchmarkGoroutinePool(b *testing.B) {
 	f := func() error {
-		time.Sleep(time.Second)
 		return nil
 	}
-	p := NewPool(100)
+	p := NewPool(10000)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		p.Submit(f)
+	}
+}
+
+func BenchmarkGoroutinePool2(b *testing.B) {
+	f := func() error {
+		fmt.Sprintf("%d", 123456)
+		return nil
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		f()
 	}
 }
 
@@ -136,4 +148,29 @@ func TestDefer(t *testing.T) {
 func TestNowDateTime(t *testing.T) {
 	str := NowDateTime()
 	fmt.Println(str)
+}
+
+func TestSignal(t *testing.T) {
+	c := make(chan os.Signal)
+	signal.Notify(c)
+	fmt.Println("start")
+	v := <-c
+	fmt.Println("有信号, 就退出! 信号为: ", v)
+}
+
+func TestSelect(t *testing.T) {
+	c := make(chan int)
+
+	go func() {
+		time.Sleep(3 * time.Second)
+		c <- 1
+	}()
+
+	fmt.Println("zu se")
+	select {
+	case <-c:
+	case <-time.After(4 * time.Second):
+		fmt.Println("default")
+	}
+	fmt.Println("pass")
 }
