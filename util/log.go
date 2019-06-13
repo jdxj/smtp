@@ -5,26 +5,31 @@ import (
 	"os"
 )
 
-var HTTPLog *log.Logger
-var SMTPLog *log.Logger
+var (
+	HTTPLog *log.Logger
+	SMTPLog *log.Logger
+	IPLog   *log.Logger
+)
+
+const (
+	httpPfix = "[HTTPServer]"
+	smtpPfix = "[SMTPServer]"
+	ipPfix   = "[IPLog]"
+
+	flags = log.Ldate | log.Ltime | log.Lshortfile
+)
 
 func init() {
-	httpPfix := "[HTTPServer]"
-	smtpPfix := "[SMTPServer]"
+	HTTPLog = log.New(newFileOUt("httpLog.log"), httpPfix, flags)
+	SMTPLog = log.New(newFileOUt("smtpLog.log"), smtpPfix, flags)
+	IPLog = log.New(newFileOUt("ipLog.log"), ipPfix, flags)
+}
 
-	flags := log.Ldate | log.Ltime | log.Lshortfile
-
-	//HTTPLog = log.New(os.Stderr, httpPfix, flags)
-	//SMTPLog = log.New(os.Stderr, smtpPfix, flags)
-	foH := &fileOut{
-		fileName: "httpLog.log",
+func newFileOUt(path string) *fileOut {
+	fo := &fileOut{
+		fileName: path,
 	}
-	foS := &fileOut{
-		fileName: "smtpLog.log",
-	}
-
-	HTTPLog = log.New(foH, httpPfix, flags)
-	SMTPLog = log.New(foS, smtpPfix, flags)
+	return fo
 }
 
 type fileOut struct {
