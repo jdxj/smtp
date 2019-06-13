@@ -25,6 +25,7 @@ func (ss *SMTPServer) ListenAndAccept() {
 		}
 
 		util.SMTPLog.Println("Receive a connection, Remote addr: ", conn.RemoteAddr())
+		util.IPLog.Println(conn.RemoteAddr())
 
 		task := func() error {
 			rer := NewReceiver(conn)

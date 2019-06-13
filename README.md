@@ -63,7 +63,7 @@ $ ./server
 12. 有些邮件确实由内容, 需要输出到文件.
 13. *假装被黑.*
     - 对所有命令返回 "ok".
-14. 记录对方 ip.
+14. ![](https://img.shields.io/badge/-%E2%88%9A-brightgreen.svg) 记录对方 ip.
 15. 优雅退出.
 
 ## FAQ
