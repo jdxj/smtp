@@ -3,6 +3,7 @@ package util
 import (
 	"log"
 	"os"
+	"time"
 )
 
 var (
@@ -15,8 +16,10 @@ const (
 	httpPfix = "[HTTPServer]"
 	smtpPfix = "[SMTPServer]"
 	ipPfix   = "[IPLog]"
+	flags    = log.Ldate | log.Ltime | log.Lshortfile
 
-	flags = log.Ldate | log.Ltime | log.Lshortfile
+	TimeFormat = "2006-01-02_15:04:05"
+	logSize    = 50 * 1024 * 1024 // 50M
 )
 
 func init() {
@@ -41,7 +44,28 @@ func (fo *fileOut) Write(p []byte) (n int, err error) {
 	if err != nil {
 		log.Panicln(err)
 	}
+
+	defer fo.rename()
 	defer f.Close()
 
 	return f.Write(p)
+}
+
+func (fo *fileOut) rename() {
+	info, err := os.Stat(fo.fileName)
+	if err != nil {
+		log.Panicln(err)
+	}
+	if info.Size() <= logSize {
+		return
+	}
+
+	err = os.Rename(fo.fileName, fo.fileName+"."+NowDateTime())
+	if err != nil {
+		log.Panicln(err)
+	}
+}
+
+func NowDateTime() string {
+	return time.Now().Format(TimeFormat)
 }

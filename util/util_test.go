@@ -2,6 +2,8 @@ package util
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -111,4 +113,27 @@ func TestNilChan(t *testing.T) {
 	close(c)
 	time.Sleep(10 * time.Second)
 	fmt.Println("main goroutine!")
+}
+
+func TestFileStat(t *testing.T) {
+	fileInfo, err := os.Stat("/home/jxdj/workspace/go/src/smtp/server")
+	if err != nil {
+		fmt.Println(err)
+		path, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+		fmt.Println(path)
+		return
+	}
+
+	fmt.Println("file size: ", fileInfo.Size())
+}
+
+func TestDefer(t *testing.T) {
+	defer func() { fmt.Println(1) }()
+	defer func() { fmt.Println(2) }()
+	defer func() { fmt.Println(3) }()
+}
+
+func TestNowDateTime(t *testing.T) {
+	str := NowDateTime()
+	fmt.Println(str)
 }
