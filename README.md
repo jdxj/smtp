@@ -41,8 +41,8 @@ $ ./server
 4. **接受**轰炸.
 5. 优化存储后端.
 6. 推送.
-7. 方攻击?
-    - 由于每个连接的 handler 数量与连接的数量对应, 且都在新 goroutine 跑, 如果出现大量连接可能会把服务器内存搞垮, 所以需要 goroutine 池.
+7. 防攻击?
+    - ![](https://img.shields.io/badge/-%E2%88%9A-brightgreen.svg) 由于每个连接的 handler 数量与连接的数量对应, 且都在新 goroutine 跑, 如果出现大量连接可能会把服务器内存搞垮, 所以需要 goroutine 池.
     - 发现 MailHole 接收了 http 的 get 方法, 参数是个 url, 可能要下载东西?
     - 也接收到了在 http 常用 mime.
     - 对方发送了 ping 命令.
@@ -64,6 +64,7 @@ $ ./server
 13. *假装被黑.*
     - 对所有命令返回 "ok".
 14. 记录对方 ip.
+15. 优雅退出.
 
 ## FAQ
 

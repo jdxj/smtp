@@ -5,6 +5,14 @@ import (
 	"sync/atomic"
 )
 
+const PoolCap = 100
+
+var WorkerPool *Pool
+
+func init() {
+	WorkerPool = NewPool(PoolCap)
+}
+
 type Task func() error
 
 func newWorker(p *Pool) *worker {
@@ -120,5 +128,5 @@ func (p *Pool) Running() int32 {
 }
 
 func (p *Pool) Release() {
-	// todo: 等待所有 worker 结束才退出
+	// todo: 等待所有 worker 结束才退出, 可能要接收系统信号, 也就是说优雅退出.
 }

@@ -24,9 +24,11 @@ func (ss *SMTPServer) ListenAndAccept() {
 			continue
 		}
 
-		go func() {
+		task := func() error {
 			rer := NewReceiver(conn)
 			rer.Start()
-		}()
+			return nil
+		}
+		util.WorkerPool.Submit(task)
 	}
 }
