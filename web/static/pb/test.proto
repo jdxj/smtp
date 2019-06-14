@@ -1,0 +1,7 @@
+syntax = "proto3";
+package test;
+
+message Player {
+    int32 ID = 1;
+    string Name = 2;
+}

@@ -174,3 +174,10 @@ func TestSelect(t *testing.T) {
 	}
 	fmt.Println("pass")
 }
+
+func TestUint64(t *testing.T) {
+	var a, b uint64
+	a = 5
+	b = 6
+	fmt.Println(a - b)
+}

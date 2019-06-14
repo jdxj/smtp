@@ -3,12 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"smtp/module"
+	"smtp/proto/test"
 	"smtp/util"
 	"smtp/web/tpldata"
-	"strconv"
 	"time"
 )
 
@@ -47,7 +48,7 @@ func WriteJsonMail(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		pfx := util.IDGen.GetID()
-		addrStr := pfx+tpldata.AddrSuf
+		addrStr := pfx + tpldata.AddrSuf
 
 		module.Store.M.Store(r.RemoteAddr, addrStr)
 		module.Store.DelUser(util.Dur, r.RemoteAddr)
@@ -69,10 +70,10 @@ func WriteTestJson(w http.ResponseWriter, r *http.Request) {
 
 	st := &struct {
 		Name string
-		Age int
+		Age  int
 	}{
 		Name: "Hello",
-		Age: 1,
+		Age:  1,
 	}
 
 	data, _ := json.Marshal(st)
@@ -84,6 +85,11 @@ func RecordURL(r *http.Request) {
 }
 
 func TestWebSocket(w http.ResponseWriter, r *http.Request) {
+	player := &test.Player{
+		ID:   123,
+		Name: "321",
+	}
+	data, _ := proto.Marshal(player)
 	upgrader := &websocket.Upgrader{
 		//CheckOrigin: func(r *http.Request) bool {
 		//	return true
@@ -96,16 +102,23 @@ func TestWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer wsConn.Close()
 
-	i := 0
+	//i := 0
+	//for {
+	//	iStr := strconv.Itoa(i)
+	//	err = wsConn.WriteMessage(websocket.TextMessage, []byte(iStr))
+	//	if err != nil {
+	//		fmt.Println(err)
+	//		return
+	//	}
+	//	i++
+	//	time.Sleep(time.Second)
+	//}
 	for {
-		iStr := strconv.Itoa(i)
-		err = wsConn.WriteMessage(1, []byte(iStr))
+		err = wsConn.WriteMessage(websocket.BinaryMessage, data)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		i++
 		time.Sleep(time.Second)
 	}
-
 }
