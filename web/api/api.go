@@ -8,13 +8,13 @@ import (
 	"smtp/module"
 	"smtp/util"
 	"smtp/web/tpldata"
-	"strconv"
 	"time"
 )
 
 func WriteJsonMail(w http.ResponseWriter, r *http.Request) {
 	RecordURL(r)
 	addr, ok := module.Store.M.Load(r.RemoteAddr)
+	fmt.Println(r.RemoteAddr)
 	if ok { // 找到 user 标识
 		addrStr := addr.(string)
 		mailMsgI, ok := module.Store.M.Load(addrStr)
@@ -84,6 +84,7 @@ func RecordURL(r *http.Request) {
 }
 
 func TestWebSocket(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.RemoteAddr)
 	upgrader := &websocket.Upgrader{
 		//CheckOrigin: func(r *http.Request) bool {
 		//	return true
@@ -96,15 +97,13 @@ func TestWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer wsConn.Close()
 
-	i := 0
 	for {
-		iStr := strconv.Itoa(i)
-		err = wsConn.WriteMessage(1, []byte(iStr))
-		if err != nil {
-			fmt.Println(err)
-			return
+		addr, ok := module.Store.M.Load(r.RemoteAddr)
+		if ok {
+			wsConn.WriteMessage(websocket.TextMessage, []byte(addr.(string)))
+		} else {
+			wsConn.WriteMessage(websocket.TextMessage, []byte("not found your email address!"))
 		}
-		i++
 		time.Sleep(time.Second)
 	}
 

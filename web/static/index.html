@@ -4,22 +4,23 @@
     <title>MailHole</title>
 </head>
 <body>
-    <textarea rows="20" cols="80" id="ta"></textarea>
+    <textarea rows="20" cols="80" id="ta1"></textarea>
+    <textarea rows="20" cols="80" id="ta2"></textarea>
 </body>
 
 <script>
     window.onload = function () {
         var wsConn;
-        var ta = document.getElementById("ta");
+        var ta2 = document.getElementById("ta2");
 
         if (window["WebSocket"]) {
             wsConn = new WebSocket("ws://" + document.location.host + "/ws");
             wsConn.onclose = function () {
-                ta.value = "wsConn was closed!";
+                ta2.value = "wsConn was closed!";
             };
             
             wsConn.onmessage = function (evt) {
-                ta.value = evt.data
+                ta2.value = evt.data
             };
         } else {
             msg.value = "Your browser does not support WebSockets."
