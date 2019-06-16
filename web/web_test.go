@@ -62,3 +62,18 @@ func handWS(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("data: ", p)
 	}
 }
+
+func TestSlice(t *testing.T) {
+	s1 := make([]int, 2)
+	s1[0] = 11
+	s1[1] = 22
+
+	s2 := s1[:0]
+	fmt.Println(s2)
+	fmt.Println(s2 == nil)
+	fmt.Println(len(s2))
+	fmt.Println("--------------")
+
+	var s3 []int
+	fmt.Println(s3 == nil)
+}

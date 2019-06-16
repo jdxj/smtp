@@ -3,9 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"smtp/module"
+	"smtp/proto/test"
 	"smtp/util"
 	"smtp/web/tpldata"
 	"time"
@@ -47,7 +49,7 @@ func WriteJsonMail(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		pfx := util.IDGen.GetID()
-		addrStr := pfx+tpldata.AddrSuf
+		addrStr := pfx + tpldata.AddrSuf
 
 		module.Store.M.Store(r.RemoteAddr, addrStr)
 		module.Store.DelUser(util.Dur, r.RemoteAddr)
@@ -69,10 +71,10 @@ func WriteTestJson(w http.ResponseWriter, r *http.Request) {
 
 	st := &struct {
 		Name string
-		Age int
+		Age  int
 	}{
 		Name: "Hello",
-		Age: 1,
+		Age:  1,
 	}
 
 	data, _ := json.Marshal(st)
@@ -84,7 +86,11 @@ func RecordURL(r *http.Request) {
 }
 
 func TestWebSocket(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.RemoteAddr)
+	player := &test.Player{
+		ID:   123,
+		Name: "321",
+	}
+	data, _ := proto.Marshal(player)
 	upgrader := &websocket.Upgrader{
 		//CheckOrigin: func(r *http.Request) bool {
 		//	return true
@@ -98,13 +104,11 @@ func TestWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer wsConn.Close()
 
 	for {
-		addr, ok := module.Store.M.Load(r.RemoteAddr)
-		if ok {
-			wsConn.WriteMessage(websocket.TextMessage, []byte(addr.(string)))
-		} else {
-			wsConn.WriteMessage(websocket.TextMessage, []byte("not found your email address!"))
+		err = wsConn.WriteMessage(websocket.BinaryMessage, data)
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
 		time.Sleep(time.Second)
 	}
-
 }

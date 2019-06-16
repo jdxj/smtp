@@ -24,9 +24,14 @@ func (ss *SMTPServer) ListenAndAccept() {
 			continue
 		}
 
-		go func() {
+		util.SMTPLog.Println("Receive a connection, Remote addr: ", conn.RemoteAddr())
+		util.IPLog.Println(conn.RemoteAddr())
+
+		task := func() error {
 			rer := NewReceiver(conn)
 			rer.Start()
-		}()
+			return nil
+		}
+		util.WorkerPool.Submit(task)
 	}
 }

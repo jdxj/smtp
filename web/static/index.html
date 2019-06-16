@@ -7,8 +7,42 @@
     <textarea rows="20" cols="80" id="ta1"></textarea>
     <textarea rows="20" cols="80" id="ta2"></textarea>
 </body>
-
+<script src="./pb/protobuf.js"></script>
 <script>
+    // protobuf.load("./pb/test.proto", function (err, root) {
+    //     if (err) throw err;
+    //
+    //     var Player = root.lookupType("test.Player");
+    //
+    //     var payLoad = {
+    //         ID: 1111,
+    //         Name: "apple",
+    //     };
+    //     var errMsg = Player.verify(payLoad);
+    //     if (errMsg) throw Error(errMsg);
+    //
+    //     var msg = Player.create(payLoad);
+    //     var buf = Player.encode(msg).finish();
+    // });
+
+
+    // window.onload = function () {
+    //     var wsConn;
+    //     var ta = document.getElementById("ta");
+    //
+    //     if (window["WebSocket"]) {
+    //         wsConn = new WebSocket("ws://" + document.location.host + "/ws");
+    //         wsConn.onclose = function () {
+    //             ta.value = "wsConn was closed!";
+    //         };
+    //
+    //         wsConn.onmessage = function (evt) {
+    //             ta.value = evt.data
+    //         };
+    //     } else {
+    //         msg.value = "Your browser does not support WebSockets."
+    //     }
+    // };
     window.onload = function () {
         var wsConn;
         var ta2 = document.getElementById("ta2");
@@ -18,12 +52,12 @@
             wsConn.onclose = function () {
                 ta2.value = "wsConn was closed!";
             };
-            
+
             wsConn.onmessage = function (evt) {
                 ta2.value = evt.data
             };
         } else {
-            msg.value = "Your browser does not support WebSockets."
+            ta2.value = "Your browser does not support WebSockets."
         }
     };
 </script>

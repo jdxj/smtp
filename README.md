@@ -41,8 +41,9 @@ $ ./server
 4. **接受**轰炸.
 5. 优化存储后端.
 6. 推送.
-7. 方攻击?
-    - 由于每个连接的 handler 数量与连接的数量对应, 且都在新 goroutine 跑, 如果出现大量连接可能会把服务器内存搞垮, 所以需要 goroutine 池.
+7. 防攻击?
+    - ![](https://img.shields.io/badge/-%E2%88%9A-brightgreen.svg) 由于每个连接的 handler 数量与连接的数量对应, 且都在新 goroutine 跑, 如果出现大量连接可能会把服务器内存搞垮, 所以需要 goroutine 池.
+    - 超时后清除 goroutine.
     - 发现 MailHole 接收了 http 的 get 方法, 参数是个 url, 可能要下载东西?
     - 也接收到了在 http 常用 mime.
     - 对方发送了 ping 命令.
@@ -53,17 +54,18 @@ $ ./server
     - 对方尝试弱口令.
     - **对方仍不放弃攻击**.
 8. 解析 smtp 协议的命令及其参数.
-    - reset
+    - ![](https://img.shields.io/badge/-%E2%88%9A-brightgreen.svg) reset
     - 在一些奇怪命令后携带了类似脚本写法的参数.
     - auth login.
 9. smtp 命令出现乱码, 不清楚对方发送非 utf-8 编码, 还是二进制数据.
-10. 日志到达指定大小后新建日志文件.
+10. ![](https://img.shields.io/badge/-%E2%88%9A-brightgreen.svg) 日志到达指定大小后新建日志文件.
 11. 统计对方 ehlo 后的内容.
     - 建立黑名单, 并利用反击手段.
 12. 有些邮件确实由内容, 需要输出到文件.
 13. *假装被黑.*
     - 对所有命令返回 "ok".
-14. 记录对方 ip.
+14. ![](https://img.shields.io/badge/-%E2%88%9A-brightgreen.svg) 记录对方 ip.
+15. 优雅退出.
 
 ## FAQ
 
