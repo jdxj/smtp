@@ -2,15 +2,19 @@ package module
 
 import "github.com/gorilla/websocket"
 
-type WSConn struct {
-	ID string
-	Conn *websocket.Conn
+type UserInfo struct {
+	MailAddr string
+	Mail     *MailMsg
+	Upgrader *websocket.Upgrader
+	WSConn   *websocket.Conn
 }
 
-func (wsConn *WSConn) Push(messageType int, p []byte) error {
-	return wsConn.Conn.WriteMessage(messageType, p)
+func (userInfo *UserInfo) PushMail() {
+	data, _ := userInfo.Mail.Json()
+	userInfo.WSConn.WriteMessage(websocket.TextMessage, data)
 }
 
-func (wsConn *WSConn) Close() error {
-	return wsConn.Conn.Close()
+func (userInfo *UserInfo) PushMailAddr() {
+	data := []byte(userInfo.MailAddr)
+	userInfo.WSConn.WriteMessage(websocket.TextMessage, data)
 }

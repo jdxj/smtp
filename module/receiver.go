@@ -70,8 +70,16 @@ func (rer *Receiver) Start() {
 			rer.WriteReply(rer.ReplyDataEnd())
 
 			// 存储邮件
-			Store.M.Store(mailMsg.ToAddr(), mailMsg)
-			Store.DelMail(util.Dur, mailMsg.ToAddr())
+			//Store.M.Store(mailMsg.ToAddr(), mailMsg)
+			//Store.DelMail(util.Dur, mailMsg.ToAddr())
+			data, ok := Store.M.Load(mailMsg.ToAddr())
+			if !ok {
+				// 没找到对应的 WebSocketConn
+				break
+			}
+			userInfo, _ := data.(*UserInfo)
+			userInfo.Mail = mailMsg
+			userInfo.PushMail()
 		case ".":
 			rer.WriteReply(rer.ReplyDataEnd())
 		case "quit":

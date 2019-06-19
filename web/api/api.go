@@ -112,3 +112,26 @@ func TestWebSocket(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(time.Second)
 	}
 }
+
+func PushJsonMail(w http.ResponseWriter, r *http.Request) {
+	pfx := util.IDGen.GetID()
+	addrStr := pfx + tpldata.AddrSuf
+
+	upgrader := &websocket.Upgrader{}
+	wsConn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		util.HTTPLog.Println(err)
+		w.WriteHeader(500)
+		w.Write([]byte("Can not user WebSocket!"))
+	}
+
+	userInfo := &module.UserInfo{
+		MailAddr: addrStr,
+		Upgrader: upgrader,
+		WSConn:   wsConn,
+	}
+	userInfo.PushMailAddr()
+	module.Store.M.Store(userInfo.MailAddr, userInfo)
+	// todo: 释放连接?
+	module.Store.DelUser(5*time.Minute, userInfo.MailAddr)
+}

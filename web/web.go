@@ -10,12 +10,14 @@ type HTTPServer struct {
 }
 
 func (s *HTTPServer) Handle() {
+	http.HandleFunc("/", Welcome)
+
 	// todo: 路径匹配规则需要研究
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static/"))))
 	http.HandleFunc("/favicon.ico", Favicon)
-	http.HandleFunc("/mail", api.WriteJsonMail)
-	http.HandleFunc("/", Welcome)
-	http.HandleFunc("/ws", api.TestWebSocket)
+	// 已启用, 目前留作记录
+	//http.HandleFunc("/mail", api.WriteJsonMail)
+	http.HandleFunc("/ws", api.PushJsonMail)
 
 	util.HTTPLog.Println("Http server started!")
 	err := http.ListenAndServe(":8025", nil)
